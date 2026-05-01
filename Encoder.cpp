@@ -3,6 +3,8 @@
 #include <fstream>
 #include <list>
 #include <cmath>
+#include <cctype>
+#include <algorithm>
 
 Encoder::Encoder(std::string fileName)
 {
@@ -22,11 +24,15 @@ void Encoder::process_assembly_files(std::list<std::string> assemblyFiles)
 
 std::string Encoder::int_to_binary(int source, int bitWidth)
 {
+    source = abs(source);
+
     std::string binaryString = "";
 
-    for (int i = bitWidth - 1; i < 0; i--)
+    for (int i = bitWidth - 1; i >= 0; i--)
     {
         int base = pow(2,i);
+
+        // std::cout << "base: " << base << " ,source : " << source << std::endl;
 
         if (source >= base)
         {
@@ -35,9 +41,11 @@ std::string Encoder::int_to_binary(int source, int bitWidth)
         }
         else
         {
-            binaryString += '0';
+            binaryString += "0";
         }
     }
+
+    // std::cout << binaryString << std::endl;
 
     return binaryString;
 
@@ -45,21 +53,26 @@ std::string Encoder::int_to_binary(int source, int bitWidth)
 
 std::string Encoder::int_to_2c_binary(int source, int bitWidth)
 {
-    std::string binaryString = int_to_binary(abs(source), bitWidth);
+    std::string binaryString = int_to_binary(source, bitWidth);
 
     bool firstOneDetected = false;
 
-    for (int i = bitWidth - 1 ; i < 0; i--)
+    if (source >= 0)
+    {
+        return binaryString;
+    }
+
+    for (int i = bitWidth - 1 ; i >= 0; i--)
     {
         if (firstOneDetected)
         {
             if (binaryString[i] == '0')
             {
-                binaryString = '1'; 
+                binaryString[i] = '1'; 
             }
             else
             {
-                binaryString = '0';
+                binaryString[i] = '0';
             }  
         }
 
@@ -182,7 +195,7 @@ void Encoder::convert_to_binary(std::string fileName)
                     {
                         std::string value = parameterList[fetchedInst.parameters[((Encoder::segment)*it).name]];
 
-                        std::cout << "value: " << value << std::endl;
+                        // std::cout << "value: " << value << std::endl;
                         std::string valueBits = int_to_2c_binary(std::stoi(value), ((Encoder::segment)*it).segmentLength);
 
                         binaryFile << valueBits;
@@ -227,7 +240,7 @@ void Encoder::map_instruction(std::string line)
 
     int count = 0;
     
-    do
+    while ((curr != ',' && prev != ',') &&  curr != '\n')
     {
         switch (count)
         {
@@ -238,11 +251,17 @@ void Encoder::map_instruction(std::string line)
                     tempParameterPosition += 1;
                     tempParameter = "";
                     count = 1;
+
+                    // for (auto it = tempInst.parameters.begin(); it != tempInst.parameters.end(); it++)
+                    // {
+                    //     std::cout << it->first << " : " << it->second << std::endl;
+                    // }
                 }
                 else if (curr == ' ')
                 {
                     tempInst.parameters[tempParameter] = tempParameterPosition;
                     tempParameterPosition += 1;
+                    tempParameter = "";
                 }
                 else
                 {
@@ -254,14 +273,19 @@ void Encoder::map_instruction(std::string line)
             case 1:
                 if (curr == ',')
                 {
-                    std::cout << "format one: " << tempFormat << std::endl;
+                    // std::cout << "format one: " << tempFormat << std::endl;
                     tempInst.format.push_back(std::stoi(tempFormat));
                     tempFormat = "";
                     count = 2;
+
+                    // for (std::list<int>::iterator it = tempInst.format.begin(); it != tempInst.format.end(); it++)
+                    // {
+                    //     std::cout << *it << std::endl;
+                    // }
                 }
                 else if (curr == '-')
                 {
-                    std::cout << "format two: " << tempFormat << std::endl;
+                    // std::cout << "format two: " << tempFormat << std::endl;
                     tempInst.format.push_back(std::stoi(tempFormat));
                     tempFormat = "";
                 }
@@ -286,8 +310,10 @@ void Encoder::map_instruction(std::string line)
                 if (curr == ',')
                 {
 
+                    // std::cout << "here" << std::endl;
                     Encoder::segment tempSegment;
                     tempSegment.bits = tempBits;
+                    std::transform(tempName.begin(), tempName.end(), tempName.begin(), [](unsigned char c){return std::tolower(c);}); // conver to lowercase
                     tempSegment.name = tempName;
                     tempSegment.segmentLength = tempInst.format.front();
                     tempInst.format.pop_front();
@@ -325,21 +351,22 @@ void Encoder::map_instruction(std::string line)
                         tempName += curr;
                     }
                 }
-                break;
         }
         
         prev = curr;
         curr_pos++;
         curr = line[curr_pos];
 
-    } while ((curr != ',' && prev != ',') ||  curr != *line.end());
+        // std::cout << "curr: " << curr << ", prev: " << prev << std::endl;
 
+    };
+
+  
     Encoder::instMap[nameKey] = tempInst;
 
-    for (std::list<Encoder::segment>::iterator it = tempInst.sequence.begin(); it != tempInst.sequence.end(); it ++)
-    {
-        std::cout << ((Encoder::segment)*it).bits;
-    }
-    std::cout << "\n";
-    
+    // for (std::list<Encoder::segment>::iterator it = tempInst.sequence.begin(); it != tempInst.sequence.end(); it ++)
+    // {
+    //     std::cout << ((Encoder::segment)*it).bits;
+    // }
+    // std::cout << "\n";
 }

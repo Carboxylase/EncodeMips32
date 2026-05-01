@@ -53,7 +53,13 @@ int main(int argc, char**argv)
 
 void test_binary_convert(Encoder encode, int bitWidth)
 {
-    for (int i = -5; i <= -5; i ++)
+    for (int i = -31; i <= -26; i ++)
+    {
+        std::string res = encode.int_to_binary(i,bitWidth);
+        std::cout << "Original number: " << i << ", binary: " << res << std::endl;
+    }
+
+    for (int i = 26; i <= 31; i++)
     {
         std::string res = encode.int_to_binary(i,bitWidth);
         std::cout << "Original number: " << i << ", binary: " << res << std::endl;
@@ -62,7 +68,13 @@ void test_binary_convert(Encoder encode, int bitWidth)
 
 void test_binary_2C_convert(Encoder encode, int bitWidth)
 {
-    for (int i = -5; i <= -5; i ++)
+    for (int i = -15; i <= -0; i ++)
+    {
+        std::string res = encode.int_to_2c_binary(i,bitWidth);
+        std::cout << "Original number: " << i << ", 2C: " << res << std::endl;
+    }
+
+    for (int i = 26; i <= 31; i++)
     {
         std::string res = encode.int_to_2c_binary(i,bitWidth);
         std::cout << "Original number: " << i << ", 2C: " << res << std::endl;
