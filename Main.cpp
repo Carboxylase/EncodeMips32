@@ -3,6 +3,7 @@
 #include <string>
 #include "Encoder.hpp"
 #include <list>
+#include <cstring>
 
 enum inputTypes
 {
@@ -12,6 +13,8 @@ enum inputTypes
 void test_binary_convert(Encoder encode, int bitWidth);
 
 void test_binary_2C_convert(Encoder encode, int bitWidth);
+
+void print_instr_map(Encoder encode);
 
 int main(int argc, char**argv)
 {
@@ -26,7 +29,7 @@ int main(int argc, char**argv)
 
             if (argv[i][0] == '-')
             {
-                if (argv[i] == ("-files"))
+                if (strcmp(argv[i],"-files") == 0)
                 {
                     inputMode = inputTypes::FILES;
                 }
@@ -45,10 +48,19 @@ int main(int argc, char**argv)
     }
 
     Encoder encode("MIPS32_Encoding.csv");
+    std::cout << "Encoder Initialize Complete" << std::endl;
 
-    test_binary_convert(encode, 5);
+    // print_instr_map(encode);
+
+    // test_binary_convert(encode, 5);
     
-    test_binary_2C_convert(encode, 5);
+    // test_binary_2C_convert(encode, 5);
+
+    if (assemblyFiles.size() > 0)
+    {
+        std::cout << "processing files" << std::endl;
+        encode.process_assembly_files(assemblyFiles);
+    }
 }
 
 void test_binary_convert(Encoder encode, int bitWidth)
@@ -81,3 +93,12 @@ void test_binary_2C_convert(Encoder encode, int bitWidth)
     }
 }
 
+void print_instr_map(Encoder encode)
+{
+    std::cout << "Printing Instruction Map" << std::endl;
+
+    for (const auto& [name, instr] : encode.instMap)
+    {
+        std::cout << name << std::endl;
+    }
+}

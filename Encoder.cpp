@@ -17,6 +17,7 @@ void Encoder::process_assembly_files(std::list<std::string> assemblyFiles)
 
     for (it = assemblyFiles.begin(); it != assemblyFiles.end(); it++)
     {
+        std::cout << "Processing: " << *it << std::endl;
         convert_to_binary(*it);
     }
 
@@ -94,6 +95,7 @@ void Encoder::convert_to_binary(std::string fileName)
 
     if (assemblyFile.is_open())
     {
+        std::cout << fileName << " is Open" << std::endl;
         while (getline (assemblyFile, line))
         {
             int currIndex = 0;
@@ -113,6 +115,7 @@ void Encoder::convert_to_binary(std::string fileName)
                     if (curr == ' ')
                     {
                         instrIdentified = true;
+                        std::cout << instrName << std::endl;
                     }
                     else
                     {
@@ -146,14 +149,14 @@ void Encoder::convert_to_binary(std::string fileName)
 
             }
 
-            if (!parameter.compare("")) // if there is a parameter as the end
+            if (parameter.compare("") != 0) // if there is a parameter as the end
             {
                 parameterList[parameterPosition] = parameter;
             }
 
             if (Encoder::instMap.find(instrName) == Encoder::instMap.end())
             {
-                std::cout << "Failed to fetched" << instrName << std::endl;
+                std::cout << "Failed to fetch " << instrName << std::endl;
             }
             else
             {
@@ -164,8 +167,17 @@ void Encoder::convert_to_binary(std::string fileName)
                 // if a segment has a name (name != '') then find the value
                 // write to binary file
 
-                std::string clearFileName = fileName.erase(fileName.length()-5,4);
-                std::string binaryFileName = fileName +  "_Binary.txt";
+                std::string AssemblyRootFolder = "Assembly/";
+                size_t isolateAssemlyFolder = fileName.find(AssemblyRootFolder);
+
+                std::string clearFileName = fileName.erase(isolateAssemlyFolder,AssemblyRootFolder.size());
+
+                std::string fileExtension = ".txt";
+                size_t isolateTxtExtension = fileName.find(fileExtension);
+                
+                clearFileName = clearFileName.erase(isolateTxtExtension, fileExtension.size());
+
+                std::string binaryFileName = "Binary/" + clearFileName +  "_Binary.txt";
                 std::ofstream binaryFile(binaryFileName);
 
                 std::list<Encoder::segment>::iterator it;
@@ -180,7 +192,8 @@ void Encoder::convert_to_binary(std::string fileName)
                     else if (((Encoder::segment)*it).segType == Encoder::type::REG)
                     {
                         // get the mapped register value
-                        std::string regName = parameterList[fetchedInst.parameters[((Encoder::segment)*it).name]];
+                        std::string parameterName = ((Encoder::segment)*it).name;
+                        std::string regName = parameterList[fetchedInst.parameters[parameterName]];
 
                         // get the register number from the alphabetical reg name
                         int regNum = Encoder::registers[regName];
@@ -240,7 +253,7 @@ void Encoder::map_instruction(std::string line)
 
     int count = 0;
     
-    while ((curr != ',' && prev != ',') &&  curr != '\n')
+    while ( (curr != ',' || prev != ',') && (curr != ',' || curr_pos + 1 != (int)(line.length() - 1)) && (curr_pos != (int)(line.length() - 1)) )
     {
         switch (count)
         {
@@ -251,6 +264,7 @@ void Encoder::map_instruction(std::string line)
                     tempParameterPosition += 1;
                     tempParameter = "";
                     count = 1;
+                    // std::cout << "End of case 0" << std::endl;
 
                     // for (auto it = tempInst.parameters.begin(); it != tempInst.parameters.end(); it++)
                     // {
@@ -277,6 +291,7 @@ void Encoder::map_instruction(std::string line)
                     tempInst.format.push_back(std::stoi(tempFormat));
                     tempFormat = "";
                     count = 2;
+                    // std::cout << "End of case 1" << std::endl;
 
                     // for (std::list<int>::iterator it = tempInst.format.begin(); it != tempInst.format.end(); it++)
                     // {
@@ -298,7 +313,9 @@ void Encoder::map_instruction(std::string line)
             case 2:
                 if (curr == ',')
                 {
+                    // std::cout << "nk: " << nameKey << std::endl;
                     count = 3;
+                    // std::cout << "End of case 2" << std::endl;
                 }
                 else
                 {
@@ -309,8 +326,6 @@ void Encoder::map_instruction(std::string line)
             default:
                 if (curr == ',')
                 {
-
-                    // std::cout << "here" << std::endl;
                     Encoder::segment tempSegment;
                     tempSegment.bits = tempBits;
                     std::transform(tempName.begin(), tempName.end(), tempName.begin(), [](unsigned char c){return std::tolower(c);}); // conver to lowercase
@@ -361,12 +376,14 @@ void Encoder::map_instruction(std::string line)
 
     };
 
+    // std::cout << "name Key: " << nameKey << std::endl;
+
   
     Encoder::instMap[nameKey] = tempInst;
 
-    // for (std::list<Encoder::segment>::iterator it = tempInst.sequence.begin(); it != tempInst.sequence.end(); it ++)
+    // for (std::list<Encoder::segment>::iterator it = instMap[nameKey].sequence.begin(); it != instMap[nameKey].sequence.end(); it ++)
     // {
-    //     std::cout << ((Encoder::segment)*it).bits;
+    //     std::cout << ((Encoder::segment)*it).segmentLength;
     // }
     // std::cout << "\n";
 }

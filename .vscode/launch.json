@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/program",
-            "args": [],
+            "args": ["-files","Assembly/Add.txt"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "MIMode": "gdb",
